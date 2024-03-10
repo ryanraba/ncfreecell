@@ -64,42 +64,6 @@ import androidx.compose.ui.unit.sp
 import com.nc.ncfreecell.ui.theme.NCFreecellTheme
 
 
-val cardDeck = listOf(
-    "cards_c_01", "cards_d_01", "cards_h_01", "cards_s_01",
-    "cards_c_02", "cards_d_02", "cards_h_02", "cards_s_02",
-    "cards_c_03", "cards_d_03", "cards_h_03", "cards_s_03",
-    "cards_c_04", "cards_d_04", "cards_h_04", "cards_s_04",
-    "cards_c_05", "cards_d_05", "cards_h_05", "cards_s_05",
-    "cards_c_06", "cards_d_06", "cards_h_06", "cards_s_06",
-    "cards_c_07", "cards_d_07", "cards_h_07", "cards_s_07",
-    "cards_c_08", "cards_d_08", "cards_h_08", "cards_s_08",
-    "cards_c_09", "cards_d_09", "cards_h_09", "cards_s_09",
-    "cards_c_10", "cards_d_10", "cards_h_10", "cards_s_10",
-    "cards_c_11", "cards_d_11", "cards_h_11", "cards_s_11",
-    "cards_c_12", "cards_d_12", "cards_h_12", "cards_s_12",
-    "cards_c_13", "cards_d_13", "cards_h_13", "cards_s_13"
-    )
-
-fun shuffleDeck(context : Context) : List<CardColumn> {
-    val resources = context.getResources()
-
-    val cardsShuffled = cardDeck.shuffled().map { Card(it, resources.getIdentifier(it, "drawable", context.getPackageName())) }
-
-    val cardColumns = listOf(
-        CardColumn(cardsShuffled.slice(0..6).toMutableList()),
-        CardColumn(cardsShuffled.slice(7..13).toMutableList()),
-        CardColumn(cardsShuffled.slice(14..20).toMutableList()),
-        CardColumn(cardsShuffled.slice(21..27).toMutableList()),
-        CardColumn(cardsShuffled.slice(28..33).toMutableList()),
-        CardColumn(cardsShuffled.slice(34..39).toMutableList()),
-        CardColumn(cardsShuffled.slice(40..45).toMutableList()),
-        CardColumn(cardsShuffled.slice(46..51).toMutableList()),
-    )
-
-    return cardColumns
-}
-
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,11 +87,10 @@ fun GameBox() {
 
     val context = LocalContext.current
 
-    var cardColumns = remember { mutableStateListOf<CardColumn>()}
-    cardColumns.clear()
-    cardColumns.addAll(shuffleDeck(context))
-
-    //val goalListClubs = mutableListOf()
+    //var cardColumns = remember { mutableStateListOf<CardColumn>()}
+    //cardColumns.clear()
+    //cardColumns.addAll(shuffleDeck(context))
+    var gameBoard = GameBoard(context)
 
     Scaffold(
         topBar = {
@@ -156,8 +119,9 @@ fun GameBox() {
                             containerColor = MaterialTheme.colorScheme.background,
                             contentColor = Color.Black),
                         onClick = {
-                            cardColumns.clear()
-                            cardColumns.addAll(shuffleDeck(context))
+                            //cardColumns.clear()
+                            //cardColumns.addAll(shuffleDeck(context))
+                            gameBoard = GameBoard(context)
                         }) {Icon(Icons.TwoTone.Add, contentDescription = "New Game")}
                     Spacer(modifier = Modifier.weight(1f))
                     Button(
@@ -183,30 +147,7 @@ fun GameBox() {
                    modifier = Modifier
                        .padding(padding)
                        .background(MaterialTheme.colorScheme.primary)) {
-                Row(modifier = Modifier.height(Card.height).background(MaterialTheme.colorScheme.primary),
-                    horizontalArrangement = Arrangement.spacedBy(5.dp))
-                {
-                    CardBase(0).display()
-                    CardBase(0).display()
-                    CardBase(0).display()
-                    CardBase(0).display()
-                    CardBase(1).display()
-                    CardBase(1).display()
-                    CardBase(1).display()
-                    CardBase(1).display()
-                }
-                Row(modifier = Modifier.background(MaterialTheme.colorScheme.primary).fillMaxSize(),
-                    horizontalArrangement = Arrangement.spacedBy(5.dp),
-                ) {
-                    for (column in cardColumns) {
-                        //column.display()
-                        Column (verticalArrangement = Arrangement.spacedBy((-40).dp)) {
-                            for (card in column.cards) {
-                                Card(onClick = {}){ card.display() }
-                            }
-                        }
-                    }
-                }
+                gameBoard.drawBoard()
             }
         }
     )
