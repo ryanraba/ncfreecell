@@ -16,10 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-// type 0 = free card space, can only be length 1
-// type 1 = card home base
-// type >1 = regular column
-class CardColumn(val cards: MutableList<Card>, val type : Int) {
+class CardColumn(val cards: MutableList<Card>) {
 
     // remove cards at or below this given card
     fun clipFrom(card: Card) : CardColumn {
@@ -28,7 +25,7 @@ class CardColumn(val cards: MutableList<Card>, val type : Int) {
         val remainingCards = cards.slice(0..cardIndex-1)
         cards.clear()
         cards.addAll(remainingCards)
-        return CardColumn(cutCards.toMutableList(),2)
+        return CardColumn(cutCards.toMutableList())
     }
 
     fun canPlace(card: Card) : Boolean {
@@ -45,12 +42,4 @@ class CardColumn(val cards: MutableList<Card>, val type : Int) {
         }
     }
 
-    @Composable
-    fun display() {
-        Column (verticalArrangement = Arrangement.spacedBy((-40).dp)) {
-            for (card in cards) {
-                 card.display()
-            }
-        }
-    }
 }

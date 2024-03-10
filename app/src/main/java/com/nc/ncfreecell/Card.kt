@@ -31,8 +31,6 @@ class Card(val name : String, val id : Int) {
 
     val suit = name[6]     // c, s, d, or h
     val number = name.slice(8..9).toInt()  // 1 == ace to 13 == king
-    val parent = null   // card attached above this card
-    val child = null   // card attached underneath this card
 
     companion object {
         val width = 45.dp
@@ -52,53 +50,6 @@ class Card(val name : String, val id : Int) {
         }
 
         return (other.number - number) == 1
-    }
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun display()  {
-        //var offsetX by remember { mutableStateOf(0f) }
-        //var offsetY by remember { mutableStateOf(0f) }
-        var cardClicked by rememberSaveable { mutableStateOf<Int?>(null) }
-
-        // create base locations for free spots and home spots
-        if ((id == 0) || (id == 1)) {
-            OutlinedCard(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-                border = BorderStroke(1.dp, Color.Black),
-                modifier = Modifier.size(width, height)
-            ) {
-                if (id == 0) {
-                    Text(
-                        text = "O",
-                        textAlign = TextAlign.Center,
-                    )
-                } else {
-                    Text(
-                        text = "A",
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
-        } else {
-            //Card(Modifier.offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-            //    .pointerInput(Unit) {
-            //        detectDragGestures { change, dragAmount ->
-            //            change.consume()
-            //            offsetX += dragAmount.x
-            //            offsetY += dragAmount.y
-            //        }
-            //    }) {
-            Card(Modifier.clickable { cardClicked = 1 }) {
-                Image(
-                    painter = painterResource(id),
-                    contentDescription = "card",
-                    modifier = Modifier.size(width, height),
-                )
-            }
-
-        }
     }
 
 }
