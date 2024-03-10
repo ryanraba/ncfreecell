@@ -1,6 +1,7 @@
 package com.nc.ncfreecell
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -52,42 +53,47 @@ class GameBoard(context : Context) {
     val cardsShuffled = cardDeck.shuffled().map { Card(it, resources.getIdentifier(it, "drawable", context.getPackageName())) }
 
     val cardColumns = listOf(
-        CardColumn(cardsShuffled.slice(0..6).toMutableList()),
-        CardColumn(cardsShuffled.slice(7..13).toMutableList()),
-        CardColumn(cardsShuffled.slice(14..20).toMutableList()),
-        CardColumn(cardsShuffled.slice(21..27).toMutableList()),
-        CardColumn(cardsShuffled.slice(28..33).toMutableList()),
-        CardColumn(cardsShuffled.slice(34..39).toMutableList()),
-        CardColumn(cardsShuffled.slice(40..45).toMutableList()),
-        CardColumn(cardsShuffled.slice(46..51).toMutableList()),
+        CardColumn(cardsShuffled.slice(0..6).toMutableList(), 2),
+        CardColumn(cardsShuffled.slice(7..13).toMutableList(), 2),
+        CardColumn(cardsShuffled.slice(14..20).toMutableList(), 2),
+        CardColumn(cardsShuffled.slice(21..27).toMutableList(), 2),
+        CardColumn(cardsShuffled.slice(28..33).toMutableList(), 2),
+        CardColumn(cardsShuffled.slice(34..39).toMutableList(), 2),
+        CardColumn(cardsShuffled.slice(40..45).toMutableList(), 2),
+        CardColumn(cardsShuffled.slice(46..51).toMutableList(), 2),
     )
 
     val cardFreeSpots = listOf(
-        CardColumn(mutableListOf<Card>()),
-        CardColumn(mutableListOf<Card>()),
-        CardColumn(mutableListOf<Card>()),
-        CardColumn(mutableListOf<Card>())
+        CardColumn(mutableListOf<Card>(), 0),
+        CardColumn(mutableListOf<Card>(), 0),
+        CardColumn(mutableListOf<Card>(), 0),
+        CardColumn(mutableListOf<Card>(), 0)
     )
 
     val cardBases = listOf(
-        CardColumn(mutableListOf<Card>()),
-        CardColumn(mutableListOf<Card>()),
-        CardColumn(mutableListOf<Card>()),
-        CardColumn(mutableListOf<Card>()),
+        CardColumn(mutableListOf<Card>(), 1),
+        CardColumn(mutableListOf<Card>(), 1),
+        CardColumn(mutableListOf<Card>(), 1),
+        CardColumn(mutableListOf<Card>(), 1),
     )
 
     fun moveCard(card : Card) {
-        val fromCol = cardColumns.find { it.cards.contains(card) } ?: return
-        val destBases = cardBases.filter { it.canPlace(card) }
-        val destCols = cardColumns.filter { (it != fromCol) && it.canPlace(card) }
-        val destFree = cardFreeSpots.filter { (it != fromCol) && it.canPlace(card) }
+        val fromCol = (cardColumns + cardFreeSpots + cardBases).find { it.cards.contains(card) } ?: return
+        val cardCol = fromCol.clipFrom(card)
+        val destBases = cardBases.filter { it.canPlace(cardCol) }
+        val destCols = cardColumns.filter { (it != fromCol) && it.canPlace(cardCol) }
+        val destFree = cardFreeSpots.filter { (it != fromCol) && it.canPlace(cardCol) }
 
         if (destBases.isNotEmpty()) {
-            destBases.first().addTo(fromCol.clipFrom(card))
-        } else if (destCols.isNotEmpty()) {
-            destCols.first().addTo(fromCol.clipFrom(card))
+            destBases.first().addTo(cardCol)
+        }
+        else if (destCols.isNotEmpty()) {
+            destCols.first().addTo(cardCol)
         } else if (destFree.isNotEmpty()) {
-            destFree.first().addTo(fromCol.clipFrom(card))
+            destFree.first().addTo(cardCol)
+        } else {  // put it back where it came from
+            Log.d("moveCard","putting card back")
+            fromCol.addTo(cardCol, true)
         }
     }
 
@@ -95,7 +101,14 @@ class GameBoard(context : Context) {
     fun drawBoard() {
         //var offsetX by remember { mutableStateOf(0f) }
         //var offsetY by remember { mutableStateOf(0f) }
-        var cardClicked by rememberSaveable { mutableStateOf<Int?>(null) }
+        var cardClicked by rememberSaveable { mutableStateOf<Card?>(null) }
+
+        // when a card is clicked, move it before redrawing the board
+        if (cardClicked != null) {
+            Log.d("drawboard","clicked card " + cardClicked!!.number + " of " + cardClicked!!.suit)
+            moveCard(cardClicked!!)
+            cardClicked = null
+        }
 
         Row(modifier = Modifier.height(Card.height).background(MaterialTheme.colorScheme.primary),
             horizontalArrangement = Arrangement.spacedBy(hPad))
@@ -112,7 +125,7 @@ class GameBoard(context : Context) {
                         }
                     }
                     else {
-                        Card(Modifier.clickable { cardClicked = 1 }) {
+                        Card(Modifier.clickable { cardClicked = it.cards.last() }) {
                             Image(
                                 painter = painterResource(it.cards.last().id),
                                 contentDescription = "card",
@@ -135,7 +148,7 @@ class GameBoard(context : Context) {
                         }
                     }
                     else {
-                        Card(Modifier.clickable { cardClicked = 1 }) {
+                        Card(Modifier.clickable { cardClicked = it.cards.last() }) {
                             Image(
                                 painter = painterResource(it.cards.last().id),
                                 contentDescription = "card",
@@ -152,21 +165,31 @@ class GameBoard(context : Context) {
         ) {
             cardColumns.forEach { it ->
                 Column(verticalArrangement = Arrangement.spacedBy(vPad)) {
-                    it.cards.forEach { cc ->
-                        //Card(Modifier.offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-                        //    .pointerInput(Unit) {
-                        //        detectDragGestures { change, dragAmount ->
-                        //            change.consume()
-                        //            offsetX += dragAmount.x
-                        //            offsetY += dragAmount.y
-                        //        }
-                        //    }) {
-                        Card(Modifier.clickable { cardClicked = 1 }) {
-                            Image(
-                                painter = painterResource(cc.id),
-                                contentDescription = "card",
-                                modifier = Modifier.size(Card.width, Card.height),
-                            )
+                    if (it.cards.isEmpty()) {
+                        OutlinedCard(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+                            border = BorderStroke(1.dp, Color.Black),
+                            modifier = Modifier.size(Card.width, Card.height)
+                        ) {
+                            Text(text = "", textAlign = TextAlign.Center)
+                        }
+                    } else {
+                        it.cards.forEach { cc ->
+                            //Card(Modifier.offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+                            //    .pointerInput(Unit) {
+                            //        detectDragGestures { change, dragAmount ->
+                            //            change.consume()
+                            //            offsetX += dragAmount.x
+                            //            offsetY += dragAmount.y
+                            //        }
+                            //    }) {
+                            Card(Modifier.clickable { cardClicked = cc }) {
+                                Image(
+                                    painter = painterResource(cc.id),
+                                    contentDescription = "card",
+                                    modifier = Modifier.size(Card.width, Card.height),
+                                )
+                            }
                         }
                     }
                 }

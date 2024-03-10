@@ -24,32 +24,17 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 
-// id 0 = empty card space
-// id 1 = card home base
-// other ids are drawable resource ids
-class Card(val name : String, val id : Int) {
+// name must match card resource naming scheme
+// id is the resource id of the drawable
+class Card(val name: String, val id: Int) {
 
     val suit = name[6]     // c, s, d, or h
+    val color = if ((suit == 'c') || (suit == 's')) 'b' else 'r'
     val number = name.slice(8..9).toInt()  // 1 == ace to 13 == king
 
     companion object {
         val width = 45.dp
         val height = 65.dp
-    }
-
-    // check if this card can be placed on another
-    fun CanPlace(other : Card) : Boolean {
-        if ((other.id == 0) || ((other.id == 1) && (number == 1))) {
-            return true
-        } else if (other.id == 1) {
-            return false
-        } else if ( ((suit == 'c') || (suit == 's')) && ((other.suit == 'c') || (other.suit == 's')) ) {
-            return false
-        } else if ( ((suit == 'd') || (suit == 'h')) && ((other.suit == 'd') || (other.suit == 'h')) ) {
-            return false
-        }
-
-        return (other.number - number) == 1
     }
 
 }
