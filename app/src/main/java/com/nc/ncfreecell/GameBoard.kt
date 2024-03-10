@@ -9,18 +9,23 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -28,10 +33,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.MutableLiveData
 
 class GameBoard(context : Context) {
     val vPad = (-40).dp
     val hPad = 5.dp
+    val resources = context.getResources()
 
     val cardDeck = listOf(
         "cards_c_01", "cards_d_01", "cards_h_01", "cards_s_01",
@@ -49,8 +57,7 @@ class GameBoard(context : Context) {
         "cards_c_13", "cards_d_13", "cards_h_13", "cards_s_13"
     )
 
-    val resources = context.getResources()
-    val cardsShuffled = cardDeck.shuffled().map { Card(it, resources.getIdentifier(it, "drawable", context.getPackageName())) }
+    var cardsShuffled = cardDeck.shuffled().map { Card(it, resources.getIdentifier(it, "drawable", context.getPackageName())) }
 
     val cardColumns = listOf(
         CardColumn(cardsShuffled.slice(0..6).toMutableList(), 2),
@@ -77,6 +84,18 @@ class GameBoard(context : Context) {
         CardColumn(mutableListOf<Card>(), 1),
     )
 
+    companion object {
+        var moves = mutableStateOf(0)
+        var score = mutableStateOf(0)
+    }
+
+    //////////////////////////////
+    fun resetGame() {
+        moves.value = 0
+        score.value = 0
+    }
+
+    /////////////////////////////
     fun moveCard(card : Card) {
         val fromCol = (cardColumns + cardFreeSpots + cardBases).find { it.cards.contains(card) } ?: return
         val cardCol = fromCol.clipFrom(card)
@@ -95,10 +114,49 @@ class GameBoard(context : Context) {
             Log.d("moveCard","putting card back")
             fromCol.addTo(cardCol, true)
         }
+
+        if ((destBases + destCols + destFree).isNotEmpty()) {
+            moves.value = moves.value + 1
+            score.value = score.value + 10
+        }
     }
 
+    /////////////////////////////
+    fun checkWin() : Boolean {
+        return cardBases.all { it.cards.size == 13 }
+    }
+
+
+    //////////////////////////////
     @Composable
-    fun drawBoard() {
+    fun DrawScore() {
+        var displayScore by rememberSaveable { score }
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            modifier = Modifier.size(width = 50.dp, height = 35.dp)
+        ) {
+            Text("Score\n$displayScore", fontSize=12.sp, lineHeight = 14.sp, textAlign=TextAlign.Center)
+        }
+    }
+
+
+    //////////////////////////////
+    @Composable
+    fun DrawMoves() {
+        var displayMoves by remember { moves }
+        Log.d("DrawMoves", "moves = " + displayMoves)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            modifier = Modifier.size(width = 50.dp, height = 35.dp)
+        ) {
+            Text("Moves\n$displayMoves", fontSize=12.sp, lineHeight = 14.sp, textAlign=TextAlign.Center)
+        }
+    }
+
+
+    /////////////////////////////
+    @Composable
+    fun DrawBoard() {
         //var offsetX by remember { mutableStateOf(0f) }
         //var offsetY by remember { mutableStateOf(0f) }
         var cardClicked by rememberSaveable { mutableStateOf<Card?>(null) }
@@ -110,7 +168,9 @@ class GameBoard(context : Context) {
             cardClicked = null
         }
 
-        Row(modifier = Modifier.height(Card.height).background(MaterialTheme.colorScheme.primary),
+        Row(modifier = Modifier
+            .height(Card.height)
+            .background(MaterialTheme.colorScheme.primary),
             horizontalArrangement = Arrangement.spacedBy(hPad))
         {
             cardFreeSpots.forEach {it ->
@@ -160,7 +220,9 @@ class GameBoard(context : Context) {
             }
         }
 
-        Row(modifier = Modifier.background(MaterialTheme.colorScheme.primary).fillMaxSize(),
+        Row(modifier = Modifier
+            .background(MaterialTheme.colorScheme.primary)
+            .fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(hPad),
         ) {
             cardColumns.forEach { it ->

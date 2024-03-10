@@ -42,27 +42,27 @@ class CardColumn(val cards: MutableList<Card>, val type: Int) {
 
             // can place a single card on an emtpy free column
             if ((type == 0) && (cards.isEmpty())) {
-                Log.d("canPlace","can place in free column")
+                //Log.d("canPlace","can place in free column")
                 return true
             }
             // can place an ace in an empty home card column
             else if ((type == 1) && cards.isEmpty() && (card.number == 1)) {
-                Log.d("canPlace","can place in empty home column")
+                //Log.d("canPlace","can place in empty home column")
                 return true
             }
             // can place any card in an empty play card column
             else if ((type == 2) && (cards.isEmpty())) {
-                Log.d("canPlace","can place in free column")
+                //Log.d("canPlace","can place in free column")
                 return true
             }
             // can place a card on same suit of previous value in home card column
             else if ((type == 1) && cards.isNotEmpty() && (card.number == cards.last().number + 1) && (card.suit == cards.last().suit)) {
-                Log.d("canPlace","can place in home column")
+                //Log.d("canPlace","can place in home column")
                 return true
             }
             // can place a card on opposite suit of subsequent value in play card column
             else if ((type == 2) && cards.isNotEmpty() && (card.number == cards.last().number - 1) && (card.color != cards.last().color)) {
-                Log.d("canPlace","can place in another column")
+                //Log.d("canPlace","can place in another column")
                 return true
             }
         }
